@@ -496,6 +496,7 @@ private:
     void kick( double power, double dir ) override;
     void long_kick( double power, double dir ) override;
     void goalieCatch( double dir ) override;
+    void drop() override;
     void say( std::string message ) override;
     /*! This function is called in the begin of each cycle
       and in case a player sends a sense_body command. */

@@ -2477,7 +2477,10 @@ CatchRef::ballTouched( const Player & player )
 void
 CatchRef::ballCaught( const Player & catcher )
 {
-    if ( isPenaltyShootOut( M_stadium.playmode() ) )
+    // ssim catch-glue: a non-goalie catch (dribble grab) is not a handling
+    // infringement, so skip the goalie-catch referee logic entirely.
+    if ( catcher.isGoalie() == false
+         || isPenaltyShootOut( M_stadium.playmode() ) )
     {
         return;
     }
@@ -2533,7 +2536,9 @@ CatchRef::ballCaught( const Player & catcher )
 void
 CatchRef::ballPunched( const Player & catcher )
 {
-    if ( isPenaltyShootOut( M_stadium.playmode() ) )
+    // ssim catch-glue: non-goalie catch attempts are not handling violations.
+    if ( catcher.isGoalie() == false
+         || isPenaltyShootOut( M_stadium.playmode() ) )
     {
         return;
     }
@@ -2666,6 +2671,7 @@ CatchRef::analyse()
 
 
     if ( M_stadium.ballCatcher()
+         && M_stadium.ballCatcher()->isGoalie()
          && pm != PM_AfterGoal_Left
          && pm != PM_AfterGoal_Right
          && pm != PM_TimeOver

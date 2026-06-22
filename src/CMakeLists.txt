@@ -144,12 +144,24 @@ if(TARGET Python3::Python)
   endif()
 endif()
 
-set(RCSSSERVER_PYTHON_MODULE_RPATH
-  "$ORIGIN/rcss/clang"
-  "$ORIGIN/rcss/conf"
-  "$ORIGIN/rcss/net"
-  "$ORIGIN/rcss/gzip"
-)
+if(APPLE)
+  # macOS dyld does not understand the ELF $ORIGIN token; it uses @loader_path
+  # to mean "directory containing this binary". Without this the module loads
+  # but fails to find the bundled rcss dylibs at import time.
+  set(RCSSSERVER_PYTHON_MODULE_RPATH
+    "@loader_path/rcss/clang"
+    "@loader_path/rcss/conf"
+    "@loader_path/rcss/net"
+    "@loader_path/rcss/gzip"
+  )
+else()
+  set(RCSSSERVER_PYTHON_MODULE_RPATH
+    "$ORIGIN/rcss/clang"
+    "$ORIGIN/rcss/conf"
+    "$ORIGIN/rcss/net"
+    "$ORIGIN/rcss/gzip"
+  )
+endif()
 
 set(RCSSSERVER_EMBEDDED_BUNDLE_DIR "${PROJECT_BINARY_DIR}/embedded_sim_bundle")
 set(RCSSSERVER_PYTHON_PACKAGE_DIR "rcssserver_embedded")

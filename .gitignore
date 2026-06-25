@@ -1,0 +1,5 @@
+# Build artifacts — wheels are platform-specific, rebuild locally via build_pip_package.sh
+dist/*.whl
+build/
+*.egg-info/
+__pycache__/

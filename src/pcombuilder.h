@@ -86,6 +86,7 @@ public:
     virtual void kick( double power, double dir ) = 0;
     virtual void long_kick( double power, double dir ) = 0;
     virtual void goalieCatch( double dir ) = 0;
+    virtual void drop() = 0;
     virtual void say( std::string message ) = 0;
     virtual void sense_body() = 0;
     virtual void score() = 0;

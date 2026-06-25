@@ -58,6 +58,7 @@ change_focus { return RCSS_PCOM_CHANGE_FOCUS; }
 kick { return RCSS_PCOM_KICK; }
 long_kick { return RCSS_PCOM_LONG_KICK; }
 catch { return RCSS_PCOM_CATCH; }
+drop { return RCSS_PCOM_DROP; }
 say { return RCSS_PCOM_SAY; }
 sense_body { return RCSS_PCOM_SENSE_BODY; }
 score { return RCSS_PCOM_SCORE; }

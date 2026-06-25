@@ -466,8 +466,10 @@ Player::disable()
                   << ")\n";
     }
 
-    if ( isGoalie()
-         && this == M_stadium.ballCatcher() )
+    // ssim catch-glue: any catcher (goalie OR dribbling field player) must
+    // release the ball on disconnect, otherwise the per-cycle re-pin keeps
+    // yanking the ball to this now-disabled player's off-field position.
+    if ( this == M_stadium.ballCatcher() )
     {
         M_stadium.clearBallCatcher();
     }
@@ -1520,6 +1522,28 @@ Player::doLongKick()
 }
 
 void
+Player::drop()
+{
+    // Release a held ball. The catch-glue patch re-pins the ball to the
+    // stadium's ball catcher every cycle (Stadium step), for goalie catches
+    // and for the field-player dribble grab alike. Clearing the catcher stops
+    // that re-pinning, so the ball is genuinely released at its current
+    // position and the player loses possession. Body command: mutually
+    // exclusive with kick/dash/catch in a cycle.
+    if ( M_command_done )
+    {
+        return;
+    }
+
+    M_command_done = true;
+
+    if ( this == M_stadium.ballCatcher() )
+    {
+        M_stadium.clearBallCatcher();
+    }
+}
+
+void
 Player::goalieCatch( double dir )
 {
     if ( M_command_done )
@@ -1535,11 +1559,17 @@ Player::goalieCatch( double dir )
     //pfr: we should only be able to catch in PlayOn mode
     //tom: actually the goalie can catch the ball in any playmode, but
     //infringements should be awarded.  Maybe later.
-    if ( ! this->isGoalie()
-         || M_goalie_catch_ban > 0
-         || ( M_stadium.playmode() != PM_PlayOn
-              && ! Referee::isPenaltyShootOut( M_stadium.playmode() ) )
-         )
+    // ssim catch-glue: non-goalies may catch (the dribble grab), but the
+    // play-mode restriction (PlayOn / penalty shoot-out only) applies to
+    // EVERYONE -- a field player must not grab the ball during dead-ball
+    // states (kickoff, free kicks, after-goal, etc.). Only the goalie is
+    // additionally subject to the catch-ban cooldown.
+    const bool wrong_playmode
+        = ( M_stadium.playmode() != PM_PlayOn
+            && ! Referee::isPenaltyShootOut( M_stadium.playmode() ) );
+
+    if ( wrong_playmode
+         || ( this->isGoalie() && M_goalie_catch_ban > 0 ) )
     {
         M_state |= CATCH_FAULT;
         return;

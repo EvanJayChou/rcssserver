@@ -155,5 +155,21 @@ PYBIND11_MODULE( _core, module )
               py::arg( "version" ) = 18.0 )
         .def( "start_match", &EmbeddedSimulator::startMatch )
         .def( "step", &EmbeddedSimulator::step, py::arg( "commands" ) )
-        .def( "snapshot", &EmbeddedSimulator::snapshot );
+        .def( "snapshot", &EmbeddedSimulator::snapshot )
+        .def( "move_ball", &EmbeddedSimulator::moveBall,
+              py::arg( "x" ),
+              py::arg( "y" ),
+              py::arg( "vx" ) = 0.0,
+              py::arg( "vy" ) = 0.0,
+              "Teleport the ball to (x, y) with optional velocity. Works in any play mode." )
+        .def( "move_player", &EmbeddedSimulator::movePlayer,
+              py::arg( "side" ),
+              py::arg( "unum" ),
+              py::arg( "x" ),
+              py::arg( "y" ),
+              py::arg( "body_angle" ),
+              "Teleport a player to (x, y) facing body_angle (radians). Works in any play mode." )
+        .def( "set_play_mode", &EmbeddedSimulator::setPlayMode,
+              py::arg( "playmode" ),
+              "Force the current play mode (e.g. PM_PlayOn) so teleported positions persist." );
 }

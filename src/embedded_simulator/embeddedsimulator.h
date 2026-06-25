@@ -54,6 +54,14 @@ public:
     EmbeddedGameState step( const std::vector< EmbeddedPlayerCommand > & commands );
     EmbeddedGameState snapshot() const;
 
+    // Trainer-style teleports for per-episode curriculum resets. Unlike a
+    // player "(move x y)" command (only honoured in before_kick_off), these
+    // place objects directly regardless of the current play mode. Angles are
+    // in radians, matching the native engine convention.
+    bool moveBall( double x, double y, double vx = 0.0, double vy = 0.0 );
+    bool movePlayer( Side side, int unum, double x, double y, double body_angle );
+    void setPlayMode( PlayMode pm );
+
 private:
     Stadium M_stadium;
     bool M_initialized = false;

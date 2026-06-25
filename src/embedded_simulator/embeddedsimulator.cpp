@@ -161,6 +161,43 @@ EmbeddedSimulator::step( const std::vector< EmbeddedPlayerCommand > & commands )
     return snapshot();
 }
 
+bool
+EmbeddedSimulator::moveBall( double x, double y, double vx, double vy )
+{
+    if ( ! M_initialized )
+    {
+        return false;
+    }
+
+    M_stadium.moveBall( PVector( x, y ), PVector( vx, vy ) );
+    return true;
+}
+
+bool
+EmbeddedSimulator::movePlayer( Side side,
+                               int unum,
+                               double x,
+                               double y,
+                               double body_angle )
+{
+    if ( ! M_initialized )
+    {
+        return false;
+    }
+
+    const PVector pos( x, y );
+    return M_stadium.movePlayer( side, unum, pos, &body_angle, nullptr );
+}
+
+void
+EmbeddedSimulator::setPlayMode( PlayMode pm )
+{
+    if ( M_initialized )
+    {
+        M_stadium.changePlayMode( pm );
+    }
+}
+
 EmbeddedGameState
 EmbeddedSimulator::snapshot() const
 {

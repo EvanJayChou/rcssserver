@@ -321,6 +321,7 @@ public:
 
     double kickableArea() const;
     bool ballKickable() const;
+    bool ballKickableInFrontReceptionCone() const;
 
     double foulDetectProbability() const;
 

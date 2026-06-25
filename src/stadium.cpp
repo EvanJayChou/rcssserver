@@ -1033,6 +1033,8 @@ Stadium::turnMovableObjects()
 void
 Stadium::incMovableObjects()
 {
+    const PVector ball_start = M_ball->pos();
+
     std::shuffle( M_movable_objects.begin(), M_movable_objects.end(),
                   DefaultRNG::instance() );
     for ( MPObjectCont::reference o : M_movable_objects )
@@ -1042,6 +1044,8 @@ Stadium::incMovableObjects()
             o->_inc();
         }
     }
+
+    snapBallToSweptPlayerCollision( ball_start, M_ball->pos() );
 
     collisions();
 
@@ -1060,7 +1064,31 @@ Stadium::incMovableObjects()
             PVector rpos = PVector::fromPolar( M_ball_catcher->size()
                                                + ServerParam::instance().ballSize(),
                                                M_ball_catcher->angleBodyCommitted() );
-            M_ball->moveTo( M_ball_catcher->pos() + rpos );
+            const PVector target = M_ball_catcher->pos() + rpos;
+
+            // ssim catch-glue dispossession: pinning the carried ball to the
+            // carrier's front must not teleport it through an actively
+            // contesting opponent. Passive overlap alone is not enough to strip
+            // the carry; the defender must be close and facing or moving toward
+            // the carried ball.
+            bool stolen = false;
+            for ( PlayerCont::reference p : M_players )
+            {
+                if ( isActiveCarryContest( p, target ) )
+                {
+                    stolen = true;
+                    break;
+                }
+            }
+
+            if ( stolen )
+            {
+                clearBallCatcher();
+            }
+            else
+            {
+                M_ball->moveTo( target );
+            }
         }
     }
 }
@@ -1849,6 +1877,127 @@ Stadium::collisions()
         p->updateCollisionVel();
     }
 
+}
+
+bool
+Stadium::snapBallToSweptPlayerCollision( const PVector & ball_start,
+                                         const PVector & ball_end )
+{
+    if ( M_ball_catcher )
+    {
+        return false;
+    }
+
+    const PVector path = ball_end - ball_start;
+    const double path_len2 = path.r2();
+    if ( path_len2 < EPS )
+    {
+        return false;
+    }
+
+    Player * hit_player = static_cast< Player * >( 0 );
+    double hit_t = 2.0;
+    PVector hit_pos;
+
+    for ( PlayerCont::reference p : M_players )
+    {
+        if ( ! p->isEnabled()
+             || p == M_ball_catcher )
+        {
+            continue;
+        }
+
+        const double radius = M_ball->size() + p->size();
+        const double radius2 = radius * radius;
+        const PVector rel_start = ball_start - p->pos();
+
+        // If the ball already started inside the body radius, the normal
+        // endpoint collision path owns this case. The swept test is only for
+        // loose fast balls that tunnel from outside to past the player.
+        if ( rel_start.r2() < radius2 )
+        {
+            continue;
+        }
+
+        const double a = path_len2;
+        const double b = 2.0 * ( rel_start.x * path.x
+                                 + rel_start.y * path.y );
+        const double c = rel_start.r2() - radius2;
+        const double disc = b * b - 4.0 * a * c;
+        if ( disc < 0.0 )
+        {
+            continue;
+        }
+
+        const double t = ( -b - std::sqrt( disc ) ) / ( 2.0 * a );
+        if ( t <= EPS
+             || t > 1.0
+             || t >= hit_t )
+        {
+            continue;
+        }
+
+        hit_t = t;
+        hit_player = p;
+        hit_pos.assign( ball_start.x + path.x * t,
+                        ball_start.y + path.y * t );
+    }
+
+    if ( ! hit_player )
+    {
+        return false;
+    }
+
+    // Place the ball just inside the crossed collision shell so the existing
+    // discrete collision resolver detects it and applies the native damped
+    // ball-player bounce. This avoids a second, custom bounce model.
+    PVector inward = hit_player->pos() - hit_pos;
+    if ( inward.r2() < EPS )
+    {
+        inward = path;
+    }
+    inward.normalize( std::min( 1.0e-4, std::sqrt( path_len2 ) ) );
+    M_ball->moveTo( hit_pos + inward );
+    return true;
+}
+
+bool
+Stadium::isActiveCarryContest( const Player * player,
+                               const PVector & carried_ball_pos ) const
+{
+    if ( ! player
+         || ! M_ball_catcher
+         || ! player->isEnabled()
+         || player == M_ball_catcher
+         || player->side() == M_ball_catcher->side() )
+    {
+        return false;
+    }
+
+    const double contest_radius = ServerParam::instance().ballSize()
+        + player->size();
+    if ( carried_ball_pos.distance2( player->pos() )
+         >= contest_radius * contest_radius )
+    {
+        return false;
+    }
+
+    const PVector to_ball = carried_ball_pos - player->pos();
+    if ( to_ball.r2() < EPS )
+    {
+        return true;
+    }
+
+    const double face_error = std::fabs(
+        normalize_angle( to_ball.th() - player->angleBodyCommitted() ) );
+    if ( face_error <= Deg2Rad( 75.0 ) )
+    {
+        return true;
+    }
+
+    const PVector player_vel = player->vel();
+    return ( player_vel.r2() > 0.0025
+             && ( player_vel.x * to_ball.x + player_vel.y * to_ball.y ) > 0.0 );
 }
 
 void

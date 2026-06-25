@@ -440,6 +440,10 @@ public:
 
 private:
 
+    bool snapBallToSweptPlayerCollision( const PVector & ball_start,
+                                         const PVector & ball_end );
+    bool isActiveCarryContest( const Player * player,
+                               const PVector & carried_ball_pos ) const;
     void calcBallCollisionPos( Player * p );
     void calcCollisionPos( MPObject * a,
                            MPObject * b );

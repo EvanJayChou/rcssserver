@@ -1343,10 +1343,22 @@ Player::kick( double power,
         return;
     }
 
-    if ( ! ballKickable() )
+    if ( ! ballKickableInFrontReceptionCone() )
     {
         M_state |= KICK_FAULT;
         M_stadium.failedKickTaken( *this );
+        // A kick attempt always relinquishes a dribble catch-glue, even when the
+        // ball is outside the front reception cone. The accepted-kick path clears
+        // the catcher via Stadium::kickTaken(); without the mirror here a
+        // cone-rejected kick leaves the ball glued while the Python command
+        // tracker treats any `kick` as a release, desyncing the two. That stale
+        // catcher then re-pins the held ball to the carrier on the next episode
+        // reset, tripping the ball_teleport guard and bricking every following
+        // episode (all 1-step). See docs/TRAINING.md teleport-brick analysis.
+        if ( this == M_stadium.ballCatcher() )
+        {
+            M_stadium.clearBallCatcher();
+        }
         return;
     }
 
@@ -1691,17 +1703,24 @@ Player::goalieCatch( double dir )
 
     if ( success )
     {
-        PVector new_pos = M_stadium.ball().pos() - this->pos();
-        double mag = new_pos.r();
-        // I would much prefer to cache the message of the catch command
-        // to the end of the cycle and then do all the movements and
-        // playmode changes there, but I feel that would be too much of a
-        // depature from the current behaviour.
-        mag -= SP.ballSize() + M_player_type->playerSize();
-        new_pos.normalize( mag );
-        M_pos += new_pos;
-        M_angle_body = new_pos.th();
-        M_vel = PVector();
+        // Preserve stock goalkeeper catch correction, but do not teleport,
+        // rotate, or stop a field player when catch is used as the dribble
+        // grab. Real robots must finish their own approach/alignment; catch
+        // only establishes ownership for the catch-glue path below.
+        if ( this->isGoalie() )
+        {
+            PVector new_pos = M_stadium.ball().pos() - this->pos();
+            double mag = new_pos.r();
+            // I would much prefer to cache the message of the catch command
+            // to the end of the cycle and then do all the movements and
+            // playmode changes there, but I feel that would be too much of a
+            // departure from the current behaviour.
+            mag -= SP.ballSize() + M_player_type->playerSize();
+            new_pos.normalize( mag );
+            M_pos += new_pos;
+            M_angle_body = new_pos.th();
+            M_vel = PVector();
+        }
 
         M_stadium.ballCaught( *this );
     }
@@ -2764,6 +2783,22 @@ bool
 Player::ballKickable() const
 {
     return pos().distance2( M_stadium.ball().pos() ) <= std::pow( kickableArea(), 2 );
+}
+
+bool
+Player::ballKickableInFrontReceptionCone() const
+{
+    if ( ! ballKickable() )
+    {
+        return false;
+    }
+
+    // Physical dribbler mouth/reception cone. The CAD angle for the outside of
+    // the ball radius is wider; the simulator checks ball center geometry, so
+    // use the measured center-angle cone of about 100 degrees total.
+    static constexpr double FRONT_RECEPTION_CENTER_ANGLE_DEG = 100.0;
+    return std::fabs( angleFromBody( M_stadium.ball() ) )
+        <= Deg2Rad( FRONT_RECEPTION_CENTER_ANGLE_DEG * 0.5 );
 }
 
 double

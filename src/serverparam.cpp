@@ -129,16 +129,16 @@ const int ServerParam::SEND_VISUALINFO_INTERVAL_MSEC = 100;
 const int ServerParam::HALF_TIME = 300;
 const int ServerParam::DROP_TIME = 100;
 
-const double ServerParam::PITCH_LENGTH = 105.0;
-const double ServerParam::PITCH_WIDTH = 68.0;
-const double ServerParam::PITCH_MARGIN = 5.0;
-const double ServerParam::CENTER_CIRCLE_R = 9.15;
-const double ServerParam::PENALTY_AREA_LENGTH = 16.5;
-const double ServerParam::PENALTY_AREA_WIDTH = 40.32;
-const double ServerParam::GOAL_AREA_LENGTH = 5.5;
-const double ServerParam::GOAL_AREA_WIDTH = 18.32;
-const double ServerParam::GOAL_WIDTH = 14.02;
-const double ServerParam::GOAL_DEPTH = 2.44;
+const double ServerParam::PITCH_LENGTH = 90.0;
+const double ServerParam::PITCH_WIDTH = 60.0;
+const double ServerParam::PITCH_MARGIN = 3.0;
+const double ServerParam::CENTER_CIRCLE_R = 5.0;
+const double ServerParam::PENALTY_AREA_LENGTH = 10.0;
+const double ServerParam::PENALTY_AREA_WIDTH = 20.0;
+const double ServerParam::GOAL_AREA_LENGTH = 3.6;
+const double ServerParam::GOAL_AREA_WIDTH = 12.5;
+const double ServerParam::GOAL_WIDTH = 10.0;
+const double ServerParam::GOAL_DEPTH = 1.8;
 const double ServerParam::PENALTY_SPOT_DIST = 11.0;
 const double ServerParam::CORNER_ARC_R = 1.0;
 const double ServerParam::KICK_OFF_CLEAR_DISTANCE = CENTER_CIRCLE_R;
@@ -153,8 +153,8 @@ const double ServerParam::BALL_DECAY = 0.94;
 const double ServerParam::BALL_RAND = 0.05;
 const double ServerParam::BALL_WEIGHT = 0.2;
 const double ServerParam::BALL_T_VEL = 0.001;
-const double ServerParam::BALL_SPEED_MAX = 3.0; // [12.0.0] 2.7 -> 3.0;
-const double ServerParam::BALL_ACCEL_MAX = 2.7;
+const double ServerParam::BALL_SPEED_MAX = 4.0; // real-robot cap: 4 m/s (1 unit/cycle = 1 m/s); covers kick + pass
+const double ServerParam::BALL_ACCEL_MAX = 4.0; // a single kick impulse cannot exceed the 4 m/s cap
 
 const double ServerParam::PLAYER_SIZE = 0.3;
 const double ServerParam::PLAYER_WIDGET_SIZE = 1.0;
@@ -196,7 +196,7 @@ const double ServerParam::VISIBLE_DISTANCE = 3.0;
 const double ServerParam::AUDIO_CUT_OFF_DIST = 50.0;
 
 const double ServerParam::DASHPOWERRATE = 0.006;
-const double ServerParam::KICKPOWERRATE = 0.027;
+const double ServerParam::KICKPOWERRATE = 0.04; // power 100 -> 4.0 accel = real-robot max kick of 4 m/s
 const double ServerParam::MAXPOWER = 100.0;
 const double ServerParam::MINPOWER = -100.0;
 
@@ -207,8 +207,8 @@ const double ServerParam::DIST_QSTEP = 0.1;
 const double ServerParam::LAND_QSTEP = 0.01;
 const double ServerParam::DIR_QSTEP = 0.1;
 
-const double ServerParam::MAXMOMENT = 180;
-const double ServerParam::MINMOMENT = -180;
+const double ServerParam::MAXMOMENT = 2.0;  // real-robot angular-velocity cap: 2 deg/cycle * 10 cycles/s = 20 deg/s
+const double ServerParam::MINMOMENT = -2.0;
 
 const double ServerParam::MAX_NECK_MOMENT = 180;
 const double ServerParam::MIN_NECK_MOMENT = -180;
